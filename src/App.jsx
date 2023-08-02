@@ -21,7 +21,7 @@ function App () {
         <AuthProvider>
           <ProjectsProvider>
             <Routes>
-              <Route path='/' element={<AuthLayout />}>
+              <Route path='/trackwave' element={<AuthLayout />}>
                 <Route index element={<Login />} />
                 <Route path='sign-up' element={<SignUp />} />
                 <Route path='forgot-password' element={<ForgotPassword />} />
