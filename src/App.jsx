@@ -19,23 +19,33 @@ const router = createHashRouter([
     path: '/',
     element: <AuthLayout />,
     children: [
-      { index: true, element: <Login /> }
+      { index: true, element: <Login /> },
+      { path: 'sign-up', element: <SignUp /> },
+      { path: 'forgot-password', element: <ForgotPassword /> },
+      { path: 'reset-password/:token', element: <ResetPassword /> },
+      { path: 'verify/:token', element: <VerifyAccount /> }
     ]
   },
   {
     path: '/projects',
-    element: <PrivateAreaLayout />
+    element: <PrivateAreaLayout />,
+    children: [
+      { index: true, element: <Projects /> },
+      { path: 'new-project', element: <NewProject /> },
+      { path: 'new-collaborator/:id', element: <NewCollaborator /> },
+      { path: ':id', element: <Project /> },
+      { path: 'edit/:id', element: <EditProject /> }
+    ]
   }
 ])
 
 function App () {
   return (
     <>
-      <RouterProvider router={router}>
-
-        <BrowserRouter>
-          <AuthProvider>
-            <ProjectsProvider>
+      <AuthProvider>
+        <ProjectsProvider>
+          <RouterProvider router={router}>
+            <BrowserRouter>
               <Routes>
                 <Route path='/' element={<AuthLayout />}>
                   <Route index element={<Login />} />
@@ -52,10 +62,10 @@ function App () {
                   <Route path='edit/:id' element={<EditProject />} />
                 </Route>
               </Routes>
-            </ProjectsProvider>
-          </AuthProvider>
-        </BrowserRouter>
-      </RouterProvider>
+            </BrowserRouter>
+          </RouterProvider>
+        </ProjectsProvider>
+      </AuthProvider>
     </>
   )
 }

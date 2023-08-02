@@ -12,9 +12,9 @@ const useSendRequest = (initialObject, functionToDo) => {
   const [validateForm, setValidateForm] = useState(false) // Start validation
   const [isValid, setIsValid] = useState(false) // Form pass test validation
   const [dataSentOK, setDataSentOK] = useState(false) // Validation passed and successfully pass to server
-  
-  // const { project, setProject, projects, setProjects, setUserFound } = useProjects()
-  // const { setAuth } = useAuth()
+
+  const { project, setProject, projects, setProjects, setUserFound } = useProjects()
+  const { setAuth } = useAuth()
 
   const navigate = useNavigate()
 
