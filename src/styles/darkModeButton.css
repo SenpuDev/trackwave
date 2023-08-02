@@ -1,0 +1,76 @@
+.dark-mode-button {
+    display: flex;
+    justify-content: right;
+}
+
+.dark-mode-button label {
+    width: 5rem;
+    height: 2.5rem;
+    position: relative;
+    display: block;
+    border: 1px solid #E4e4e4;
+    background: rgb(249 250 251);
+    border-radius: 2rem;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.dark-mode-button label:after {
+    content: "";
+    position: absolute;
+    width: 2rem;
+    height: 2rem;
+    top: .25rem;
+    left: .25rem;
+    background: #7893f9;
+    border-radius: 180px;
+    transition: 0.3s;
+}
+
+.dark-mode-button input {
+    width: 0;
+    height: 0;
+    visibility: hidden;
+}
+
+.dark-mode-button input:checked+label {
+    background: #475569;
+    border: 1px solid #475569;
+}
+
+.dark-mode-button input:checked+label:after {
+    left: 2.6rem;
+    background: #7893f9;
+}
+
+.dark-mode-button label:active:after {
+    transform: scale(1.2, 0.8);
+}
+
+.sun {
+    position: absolute;
+    width: 1.5rem;
+    z-index: 1;
+    top: .25rem;
+    left: .5rem;
+    fill: #fff;
+    transition: 0.3s;
+}
+
+.moon {
+    position: absolute;
+    width: 1.5rem;
+    z-index: 1;
+    top: .25rem;
+    left: 3rem;
+    fill: #7e7e7e;
+    transition: 0.3s;
+}
+
+input:checked+label .sun {
+    fill: #94a3b8;
+}
+
+input:checked+label .moon {
+    fill: #fff;
+}
