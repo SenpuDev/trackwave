@@ -1,55 +1,66 @@
 import { Fragment, useEffect } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
 import FormField from './FormField'
-import useAuth from '../hooks/useAuth'
 import { useParams } from 'react-router-dom'
 import { addTask, editTask } from '../helpers/requestFunctions'
 import Alert from './Alert'
 import { kebabToCamelCase, minDate, localDate } from '../helpers/miscellaneous'
-import useSendRequest from '../hooks/useSendRequest'
+import useValidate from '../hooks/useValidate'
+import useFetch from '../hooks/useFetch'
 
 const PRIORITY = ['Low', 'Medium', 'High']
 
 const ModalTask = ({ modal, setModal, children, currentTask }) => {
   const params = useParams()
-  const { auth } = useAuth()
 
+  const initialObject = { name: '', description: '', deadLine: '', priority: '', project: params.id }
+  const { validationAlert, setStartValidation, objectToValidate, setObjectToValidate, setObjectIsValid, objectIsValid } = useValidate(initialObject)
+  const { fetchAlert, setFetchAlert, setStartFetch, dataSentOk, setDataSentOk } = useFetch(objectToValidate, currentTask?.name ? editTask : addTask, setObjectIsValid)
+
+  // When edit, fill the form
   useEffect(() => {
     const fillForm = () => {
       if (currentTask?.name) {
-        const updatedFormData = { id: currentTask._id, name: currentTask.name, description: currentTask.description, deadLine: currentTask.deadLine, priority: currentTask.priority, project: params.id, token: auth.token }
-        setFormData(updatedFormData)
+        const updatedObjectToValidate = { id: currentTask._id, name: currentTask.name, description: currentTask.description, deadLine: currentTask.deadLine, priority: currentTask.priority, project: params.id }
+        setObjectToValidate(updatedObjectToValidate)
       }
     }
     fillForm()
   }, [currentTask])
 
-  const initialObject = { name: '', description: '', deadLine: '', priority: '', project: params.id, token: auth.token }
-
   // If object to send has id, editTask, else add task
-  const { alert, setAlert, formData, setFormData, setValidateForm, setDataSentOK, dataSentOK } = useSendRequest(initialObject, (currentTask ? editTask : addTask))
 
   const handleChange = (e) => {
     const { name, value } = e.target
     const camelCaseName = kebabToCamelCase(name)
-    setFormData((formData) => ({ ...formData, [camelCaseName]: value }))
+    setObjectToValidate((objectToValidate) => ({ ...objectToValidate, [camelCaseName]: value }))
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setValidateForm(true)
+    setStartValidation(true)
   }
 
+  // Send Request if Object is Ok!
   useEffect(() => {
-    if (dataSentOK) {
-      setTimeout(() => { setModal(false) }, 1250)
-      setTimeout(() => [setAlert({}), setDataSentOK(false)], 1500)
+    if (objectIsValid) {
+      setStartFetch(true)
     }
-  }, [dataSentOK])
+  }, [objectIsValid])
+
+  // Reset Form on Data successfully send
+  useEffect(() => {
+    if (dataSentOk) {
+      setObjectToValidate(initialObject)
+      setDataSentOk(false)
+      setTimeout(() => { setModal(false) }, 1250)
+      setTimeout(() => [setFetchAlert({}), setDataSentOk(false)], 1500)
+    }
+  }, [dataSentOk])
 
   return (
     <Transition.Root show={modal} as={Fragment}>
-      <Dialog as='div' className='fixed z-10 inset-0 overflow-y-auto' onClose={() => setModal(false)}>
+      <Dialog as='div' className='fixed inset-0 overflow-y-auto  z-20' onClose={() => setModal(false)}>
         <div className='flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0'>
           <Transition.Child
             as={Fragment}
@@ -61,7 +72,7 @@ const ModalTask = ({ modal, setModal, children, currentTask }) => {
             leaveTo='opacity-0'
           >
             <Dialog.Overlay
-              className='fixed inset-0 bg-gray-500 dark:bg-gray-800 dark:bg-opacity-75 bg-opacity-75 transition-opacity'
+              className='fixed inset-0 bg-gray-500 dark:bg-gray-950 dark:bg-opacity-75 bg-opacity-75 transition-opacity'
             />
           </Transition.Child>
 
@@ -84,7 +95,7 @@ const ModalTask = ({ modal, setModal, children, currentTask }) => {
               <div className='hidden sm:block absolute top-0 right-0 pt-4 pr-4'>
                 <button
                   type='button'
-                  className='bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'
+                  className='bg-white  dark:bg-slate-800 rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-400'
                   onClick={() => setModal(false)}
                 >
                   <span className='sr-only'>Close</span>
@@ -97,13 +108,13 @@ const ModalTask = ({ modal, setModal, children, currentTask }) => {
               <div className='sm:flex sm:items-start'>
                 <div className='mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full'>
                   {children}
-                  {alert.msg && <Alert alert={alert} />}
+                  {(validationAlert.msg || fetchAlert.msg) && <Alert alert={validationAlert.msg ? validationAlert : fetchAlert} />}
                   <form onSubmit={handleSubmit}>
-                    <FormField type='text' id='name' text='name' value={formData.name} onChange={handleChange} />
-                    <FormField type='textarea' id='description' text='description' value={formData.description} onChange={handleChange} />
-                    <FormField type='datetime-local' min={minDate} id='dead-line' text='Dead Line' onChange={handleChange} value={currentTask ? localDate(formData.deadLine) : formData.deadLine} />
-                    <FormField type='select' id='priority' text='Priority' value={formData.priority} selectOptions={PRIORITY} onChange={handleChange} />
-                    <input type='submit' value={currentTask ? 'Update task' : 'Add Task'} className='bg-indigo-400 hover:bg-blue-400 transition-all  cursor-pointer w-full py-3 text-white font-bold rounded uppercase' />
+                    <FormField type='text' id='name' text='name' value={objectToValidate.name} onChange={handleChange} />
+                    <FormField type='textarea' id='description' text='description' value={objectToValidate.description} onChange={handleChange} />
+                    <FormField type='datetime-local' min={minDate} id='dead-line' text='Dead Line' onChange={handleChange} value={currentTask && localDate(objectToValidate.deadLine)} />
+                    <FormField type='select' id='priority' text='Priority' value={objectToValidate.priority} selectOptions={PRIORITY} onChange={handleChange} />
+                    <input type='submit' value={currentTask ? 'Update task' : 'Add Task'} className='bg-indigo-400 hover:bg-indigo-500 transition-all  cursor-pointer w-full py-3 text-white font-bold rounded uppercase' />
                   </form>
                 </div>
               </div>

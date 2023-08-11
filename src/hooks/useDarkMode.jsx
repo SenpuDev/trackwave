@@ -1,23 +1,20 @@
 import { useState, useEffect } from 'react'
 
 const useDarkMode = () => {
-  const [darkMode, setDarkMode] = useState(!!window.localStorage.getItem('darkmode'))
+  const [darkMode, setDarkMode] = useState(window.localStorage.getItem('theme') || 'light')
 
   const toggleDarkMode = () => {
-    setDarkMode(!darkMode)
+    setDarkMode((prevState) => prevState === 'dark' ? 'light' : 'dark')
   }
 
   useEffect(() => {
-    if (darkMode) {
-      document.body.classList.remove('bg-slate-200')
-      document.body.classList.add('dark')
-      document.body.classList.add('bg-slate-900')
-      window.localStorage.setItem('darkmode', 'true')
-    } else if (document.body.classList.contains('dark')) {
-      document.body.classList.remove('dark')
-      document.body.classList.remove('bg-slate-900')
-      document.body.classList.add('bg-slate-200')
-      window.localStorage.removeItem('darkmode')
+    if (darkMode === 'dark') {
+      document.documentElement.classList.remove('light')
+      document.documentElement.classList.add('dark')
+      window.localStorage.setItem('theme', 'dark')
+    } else if (darkMode === 'light') {
+      document.documentElement.classList.remove('dark')
+      window.localStorage.removeItem('theme')
     }
   }, [darkMode])
 

@@ -1,3 +1,5 @@
+import '../styles/datePickerCustom.css' // Html calendar picker on dark mode
+
 const FormField = ({ type, id, text, value, min, selectOptions, onChange }) => {
   let content
 
@@ -8,7 +10,7 @@ const FormField = ({ type, id, text, value, min, selectOptions, onChange }) => {
     case 'text':
       content = (
         <input
-          className='w-full p-1 rounded-lg bg-gray-100 dark:bg-slate-600 dark:border-slate-600 dark:text-slate-100 outline-none border sm:flex-1'
+          className='w-full p-1 rounded-lg bg-gray-100 dark:bg-slate-700 dark:text-slate-100 outline-none sm:flex-1 '
           type={type}
           min={min}
           id={id}
@@ -23,7 +25,7 @@ const FormField = ({ type, id, text, value, min, selectOptions, onChange }) => {
     case 'textarea':
       content = (
         <textarea
-          className='w-full p-1 rounded-lg bg-gray-100 dark:bg-slate-600 dark:border-slate-600 dark:text-slate-100 outline-none border sm:flex-1'
+          className='w-full p-1 rounded-lg bg-gray-100 dark:bg-slate-700 dark:text-slate-100 outline-none sm:flex-1'
           id={id}
           name={id}
           value={value}
@@ -40,7 +42,7 @@ const FormField = ({ type, id, text, value, min, selectOptions, onChange }) => {
           name={id}
           value={value}
           onChange={onChange}
-          className='w-full p-1 rounded-lg bg-gray-100 dark:bg-slate-600 dark:border-slate-600 dark:text-slate-100 outline-none border sm:flex-1'
+          className='w-full p-1 rounded-lg bg-gray-100 dark:bg-slate-700 dark:text-slate-100 outline-none sm:flex-1'
         >
           <option value=''>-- Select one --</option>
 
@@ -59,7 +61,7 @@ const FormField = ({ type, id, text, value, min, selectOptions, onChange }) => {
   return (
     <div className='flex sm:items-center mb-4 gap-2 flex-col sm:flex-row sm:gap-4 transition-all'>
       <label
-        className='basis-1/6 uppercase text-gray-500 dark:text-gray-200 text-l italic font-semibold'
+        className='basis-1/6 uppercase text-gray-500 dark:text-gray-50 text-l italic font-semibold'
         htmlFor={id}
       >
         {text}

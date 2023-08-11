@@ -9,9 +9,17 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap">
   <title>TrackWave</title>
+  <!-- Prevents darkmode flash on reload -->
+  <script>
+    if (localStorage.theme === 'dark') {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+  </script>
 </head>
 
-<body class="font-outfit bg-slate-200">
+<body class="font-outfit bg-slate-200 dark:bg-slate-900">
   <div id="root"></div>
   <script type="module" src="/src/main.jsx"></script>
 </body>

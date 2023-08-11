@@ -12,11 +12,12 @@ export const ProjectsProvider = ({ children }) => {
   const [loading, setLoading] = useState(false)
   const [userFound, setUserFound] = useState({})
   const { auth } = useAuth()
+  const [projectAlert, setProjectAlert] = useState({})
 
   useEffect(() => { // First time context is in use
     (async () => {
       setLoading(true)
-      const projectsObtained = await getProjects(auth.token)
+      const projectsObtained = await getProjects()
       setProjects(projectsObtained)
       setLoading(false)
     })()
@@ -31,14 +32,25 @@ export const ProjectsProvider = ({ children }) => {
   }, [search])
 
   const obtainProject = async (id) => {
-    if (id.length !== 24) return
+    if (id.length !== 24) {
+      setProjectAlert({ msg: 'Not a valid project', error: true })
+      return
+    }
+
     setLoading(true)
-    const projectObtained = await getProject(id, auth.token)
+    const projectObtained = await getProject(id)
+
+    if (projectObtained.error) {
+      setProjectAlert(projectObtained)
+      return
+    }
+
     setProject(projectObtained)
+    setProjectAlert({})
     setLoading(false)
   }
 
   return (
-    <ProjectsContext.Provider value={{ projects, setProjects, loading, project, setProject, obtainProject, userFound, setUserFound, setSearch, filteredProjects }}>{children}</ProjectsContext.Provider>
+    <ProjectsContext.Provider value={{ projects, setProjects, loading, project, setProject, projectAlert, obtainProject, userFound, setUserFound, setSearch, filteredProjects, search, setFilteredProjects }}>{children}</ProjectsContext.Provider>
   )
 }

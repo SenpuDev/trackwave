@@ -4,8 +4,8 @@ import DarkModeButton from '../components/DarkModeButton'
 const AuthLayout = () => {
   return (
     <>
-      <main className='container mx-auto md:flex md:justify-center px-5 mt-10'>
-        <div className='md:w-5/6 xl:w-1/2 bg-white dark:bg-slate-800 shadow rounded-lg transition-all'>
+      <main className='container mx-auto flex justify-center px-5 mt-20'>
+        <div className='w-full md:w-5/6 xl:w-1/2 bg-white dark:bg-slate-800 shadow rounded-lg transition-all'>
           <div className='mx-auto mt-4 w-10/12'>
             <DarkModeButton />
           </div>

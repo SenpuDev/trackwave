@@ -1,3 +1,29 @@
+export const loginRequest = async (formData) => {
+  const { email, password } = formData
+  try {
+    const url = `${import.meta.env.VITE_BACKEND_URL}/api/users/login`
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ email, password })
+    })
+
+    const data = await response.json()
+    if (!response.ok) {
+      return { msg: data.msg, error: true }
+    }
+
+    // Save auth token for future automatic logins (Expires when log out or 28d)
+    window.localStorage.setItem('auth_token', data.token)
+
+    return { msg: data.msg, error: false, userLogged: data } // Data set to authContext on useFetch
+  } catch (error) {
+    return { msg: 'Error occurred during the request', error: true }
+  }
+}
+
 export const signUpRequest = async (formData) => {
   const { name, email, password } = formData
   try {
@@ -16,7 +42,7 @@ export const signUpRequest = async (formData) => {
       return { msg: data.msg, error: true }
     }
 
-    return { msg: data.msg, error: false }
+    return { msg: data.msg, error: false, userSigned: data }
   } catch (error) {
     return { msg: 'Error occurred during the request', error: true }
   }
@@ -47,10 +73,10 @@ export const forgotPasswordRequest = async (formData) => {
 }
 
 export const newPasswordRequest = async (formData) => {
-  const { password, token } = formData
+  const { password, resetToken } = formData
 
   try {
-    const url = `${import.meta.env.VITE_BACKEND_URL}/api/users/reset-password/${token}`
+    const url = `${import.meta.env.VITE_BACKEND_URL}/api/users/reset-password/${resetToken}`
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -70,36 +96,10 @@ export const newPasswordRequest = async (formData) => {
   }
 }
 
-export const loginRequest = async (formData) => {
-  const { email, password } = formData
-  try {
-    const url = `${import.meta.env.VITE_BACKEND_URL}/api/users/login`
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ email, password })
-    })
-
-    const data = await response.json()
-    if (!response.ok) {
-      return { msg: data.msg, error: true }
-    }
-
-    window.localStorage.setItem('token', data.token) // Save session token
-
-    return { msg: data.msg, error: false, data }
-  } catch (error) {
-    return { msg: 'Error occurred during the request', error: true }
-  }
-}
-
-// Auth token needed
 export const newProject = async (formData) => {
-  const { name, description, deadLine, client, token } = formData
-
-  if (!token) {
+  const AUTH_TOKEN = window.localStorage.getItem('auth_token')
+  const { name, description, deadLine, client } = formData
+  if (!AUTH_TOKEN) {
     return
   }
 
@@ -109,7 +109,7 @@ export const newProject = async (formData) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${AUTH_TOKEN}`
       },
       body: JSON.stringify({ name, description, deadLine, client })
     })
@@ -126,9 +126,9 @@ export const newProject = async (formData) => {
 }
 
 export const updateProject = async (formData) => {
-  const { id, name, description, deadLine, client, token } = formData
-
-  if (!token) {
+  const AUTH_TOKEN = window.localStorage.getItem('auth_token')
+  const { id, name, description, deadLine, client } = formData
+  if (!AUTH_TOKEN) {
     return
   }
 
@@ -138,7 +138,7 @@ export const updateProject = async (formData) => {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${AUTH_TOKEN}`
       },
       body: JSON.stringify({ name, deadLine, description, client })
     })
@@ -154,9 +154,9 @@ export const updateProject = async (formData) => {
 }
 
 export const deleteProject = async (formData) => {
-  const { id, token } = formData
-
-  if (!token) {
+  const AUTH_TOKEN = window.localStorage.getItem('auth_token')
+  const { id } = formData
+  if (!AUTH_TOKEN) {
     return
   }
 
@@ -166,7 +166,7 @@ export const deleteProject = async (formData) => {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${AUTH_TOKEN}`
       },
       body: JSON.stringify({ id })
     })
@@ -183,8 +183,9 @@ export const deleteProject = async (formData) => {
 }
 
 export const addTask = async (formData) => {
-  const { name, description, deadLine, priority, project, token } = formData
-  if (!token) {
+  const AUTH_TOKEN = window.localStorage.getItem('auth_token')
+  const { name, description, deadLine, priority, project } = formData
+  if (!AUTH_TOKEN) {
     return
   }
 
@@ -194,7 +195,7 @@ export const addTask = async (formData) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${AUTH_TOKEN}`
       },
       body: JSON.stringify({ name, description, deadLine, priority, project })
     })
@@ -212,9 +213,10 @@ export const addTask = async (formData) => {
 }
 
 export const editTask = async (formData) => {
-  const { id, name, description, deadLine, priority, project, token } = formData
+  const AUTH_TOKEN = window.localStorage.getItem('auth_token')
+  const { id, name, description, deadLine, priority, project } = formData
 
-  if (!token) {
+  if (!AUTH_TOKEN) {
     return
   }
 
@@ -224,7 +226,7 @@ export const editTask = async (formData) => {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${AUTH_TOKEN}`
       },
       body: JSON.stringify({ name, description, deadLine, priority, project })
     })
@@ -242,10 +244,11 @@ export const editTask = async (formData) => {
 }
 
 // Update Status On DragEnd
-export const updateTaskStatus = async (itemToUpdate, token) => {
+export const updateTaskStatus = async (itemToUpdate) => {
+  const AUTH_TOKEN = window.localStorage.getItem('auth_token')
   const { _id, status } = itemToUpdate
 
-  if (!token) {
+  if (!AUTH_TOKEN) {
     return
   }
 
@@ -255,7 +258,7 @@ export const updateTaskStatus = async (itemToUpdate, token) => {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${AUTH_TOKEN}`
       },
       body: JSON.stringify({ status })
     })
@@ -269,9 +272,10 @@ export const updateTaskStatus = async (itemToUpdate, token) => {
   }
 }
 export const deleteTask = async (formData) => {
-  const { id, token } = formData
+  const AUTH_TOKEN = window.localStorage.getItem('auth_token')
+  const { id } = formData
 
-  if (!token) {
+  if (!AUTH_TOKEN) {
     return
   }
 
@@ -281,7 +285,7 @@ export const deleteTask = async (formData) => {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${AUTH_TOKEN}`
       },
       body: JSON.stringify({ id })
     })
@@ -298,8 +302,9 @@ export const deleteTask = async (formData) => {
 }
 
 export const searchCollab = async (formData) => {
-  const { email, token } = formData
-  if (!token) return
+  const AUTH_TOKEN = window.localStorage.getItem('auth_token')
+  const { email } = formData
+  if (!AUTH_TOKEN) return
 
   try {
     const url = `${import.meta.env.VITE_BACKEND_URL}/api/projects/collabs`
@@ -307,7 +312,7 @@ export const searchCollab = async (formData) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${AUTH_TOKEN}`
       },
       body: JSON.stringify({ email })
     })
@@ -321,10 +326,12 @@ export const searchCollab = async (formData) => {
     return { msg: 'Error occurred during the request', error: true }
   }
 }
-// TODO MUST: Hacer un context general unico para las alertas. Separar useSendRequest en dos, useValidation y useFetch
+
 export const addCollab = async (formData) => {
-  const { id, email, token } = formData
-  if (!token) return
+  const AUTH_TOKEN = window.localStorage.getItem('auth_token')
+
+  const { id, email } = formData
+  if (!AUTH_TOKEN) return
 
   try {
     const url = `${import.meta.env.VITE_BACKEND_URL}/api/projects/collabs/${id}` //
@@ -332,7 +339,7 @@ export const addCollab = async (formData) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${AUTH_TOKEN}`
       },
       body: JSON.stringify({ email })
     })
@@ -349,8 +356,9 @@ export const addCollab = async (formData) => {
   }
 }
 export const deleteCollab = async (formData) => {
-  const { projectId, collaboratorId, token } = formData
-  if (!token) return
+  const AUTH_TOKEN = window.localStorage.getItem('auth_token')
+  const { projectId, collaboratorId } = formData
+  if (!AUTH_TOKEN) return
 
   try {
     const url = `${import.meta.env.VITE_BACKEND_URL}/api/projects/delete-collab/${projectId}` //
@@ -358,7 +366,7 @@ export const deleteCollab = async (formData) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${AUTH_TOKEN}`
       },
       body: JSON.stringify({ collaboratorId })
     })
@@ -375,14 +383,15 @@ export const deleteCollab = async (formData) => {
 }
 // 🔽 USED IN PROJECTSCONTEXT FOR MANTAIN FRONTEND UPDATED WITH BACKEND WITHOUT MANY REQUEST TO DB 🔽
 
-export const getProjects = async (authToken) => {
-  if (!authToken) return
+export const getProjects = async () => {
+  const AUTH_TOKEN = window.localStorage.getItem('auth_token')
+  if (!AUTH_TOKEN) return
   try {
     const url = `${import.meta.env.VITE_BACKEND_URL}/api/projects`
     const response = await fetch(url, {
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${authToken}`
+        Authorization: `Bearer ${AUTH_TOKEN}`
       }
     })
     const data = await response.json()
@@ -395,15 +404,16 @@ export const getProjects = async (authToken) => {
   }
 }
 
-export const getProject = async (id, authToken) => {
+export const getProject = async (id) => {
+  const AUTH_TOKEN = window.localStorage.getItem('auth_token')
   try {
-    if (!authToken) return
+    if (!AUTH_TOKEN) return
 
     const url = `${import.meta.env.VITE_BACKEND_URL}/api/projects/${id}`
     const response = await fetch(url, {
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${authToken}`
+        Authorization: `Bearer ${AUTH_TOKEN}`
       }
     })
     const data = await response.json()

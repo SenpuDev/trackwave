@@ -8,8 +8,7 @@
     height: 2.5rem;
     position: relative;
     display: block;
-    border: 1px solid #E4e4e4;
-    background: rgb(249 250 251);
+    background: rgb(243 244 246);
     border-radius: 2rem;
     cursor: pointer;
     transition: 0.3s;
@@ -36,6 +35,12 @@
 .dark-mode-button input:checked+label {
     background: #475569;
     border: 1px solid #475569;
+}
+
+
+.dark-mode-button.alternative-color input:checked+label {
+    background: #1e293b;
+    border: 1px solid #1e293b;
 }
 
 .dark-mode-button input:checked+label:after {

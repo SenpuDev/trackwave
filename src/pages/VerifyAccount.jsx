@@ -28,7 +28,9 @@ const VerifyAccount = () => {
   return (
     <>
       <h2 className='capitalize font-bold text-l text-center text-gray-500 sm:text-2xl dark:text-gray-200'>Confirm your <span className='text-indigo-400'>account</span> </h2>
-      {alert.msg && <Alert alert={alert} />}
+      <div className='w-10/12 mx-auto'>
+        {alert.msg && <Alert alert={alert} />}
+      </div>
       {validToken && (
         <FormLink to='/' text='Return to the homepage and log in' />
       )}

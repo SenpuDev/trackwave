@@ -3,6 +3,7 @@ import useAuth from '../hooks/useAuth'
 import Header from '../components/Header'
 import Sidebar from '../components/Sidebar'
 import Spinner from '../components/Spinner'
+import { Toaster } from 'react-hot-toast'
 
 const PrivateAreaLayout = () => {
   const { auth, loading } = useAuth()
@@ -18,6 +19,7 @@ const PrivateAreaLayout = () => {
             <div className='md:flex'>
               <Sidebar />
               <main className='flex-1 m-10'>
+                <Toaster />
                 <Outlet />
               </main>
             </div>

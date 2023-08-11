@@ -1,7 +1,12 @@
+import { useEffect } from 'react'
 import useProjects from '../hooks/useProjects'
 
 const SearchBar = ({ header = false }) => {
-  const { setSearch } = useProjects()
+  const { search, setSearch } = useProjects()
+
+  useEffect(() => {
+    setSearch('')
+  }, [])
 
   return (
     <div className={`relative shadow-md rounded-xl ${header ? 'hidden md:block' : 'md:hidden block mb-4'}`}>
@@ -24,7 +29,8 @@ const SearchBar = ({ header = false }) => {
           type='text'
           placeholder='Search'
           onChange={e => setSearch(e.target.value)}
-          className='w-full py-1 pl-12 text-gray-500 dark:text-white rounded-xl outline-none bg-white dark:dark:bg-slate-600 focus:border-gray-500'
+          className='w-full py-1 pl-12 text-gray-500 dark:text-white rounded-xl outline-none bg-white dark:dark:bg-slate-800 focus:border-gray-500'
+          value={search}
         />
       </form>
     </div>

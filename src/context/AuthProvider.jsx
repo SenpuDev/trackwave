@@ -7,11 +7,11 @@ export const AuthProvider = ({ children }) => {
   const [auth, setAuth] = useState({})
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => { // Authenticate user if token detected
-    const token = window.localStorage.getItem('token')
-
+  useEffect(() => {
+    // Authenticate user if token detected
     const authUser = async () => {
-      if (!token) {
+      const AUTH_TOKEN = window.localStorage.getItem('auth_token')
+      if (!AUTH_TOKEN) {
         setLoading(false)
         return
       }
@@ -20,27 +20,22 @@ export const AuthProvider = ({ children }) => {
         const response = await fetch(url, {
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
+            Authorization: `Bearer ${AUTH_TOKEN}`
           }
         })
         const data = await response.json()
-        data.token = token
         setAuth(data)
-
-        // const isRootPath = location.pathname === '/'
-        // isRootPath && navigate('/projects')
       } catch (error) {
-        console.log(error)
+        console.log('Auth failed')
       }
       setLoading(false)
     }
-
     authUser()
   }, [])
 
   const logOut = () => {
     setAuth({})
-    window.localStorage.removeItem('token')
+    window.localStorage.removeItem('auth_token')
   }
 
   return (

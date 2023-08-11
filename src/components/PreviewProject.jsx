@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import ArtImg from '../img/art.png'
+import ArtLowImg from '../img/art.png'
 import useAuth from '../hooks/useAuth'
 
 const PreviewProject = ({ project }) => {
@@ -8,7 +8,7 @@ const PreviewProject = ({ project }) => {
   const date = new Date(deadLine)
   return (
 
-    <li className='bg-gray-50 rounded dark:bg-slate-800 overflow-hidden shadow-sm relative hover:scale-105 transition-all'>
+    <li className='bg-gray-50 rounded dark:bg-slate-800 overflow-hidden shadow-md relative hover:scale-105 transition-all'>
       <Link to={`${_id}`} className='px-4 py-2 flex flex-col'>
         <div className='flex gap-4'>
           <h2 className=' dark:text-gray-200'>{name}</h2>
@@ -19,9 +19,9 @@ const PreviewProject = ({ project }) => {
 
         <div className='flex justify-between'>
           <p className='text-gray-400'>{client}</p>
-          <p className='text-gray-400'>{date.toLocaleString().split(',')[0]}</p>
+          <p className='text-gray-400 z-10'>{date.toLocaleString().split(',')[0]}</p>
         </div>
-        <img src={ArtImg} alt='' className='absolute top-0 right-0 opacity-30' />
+        <img src={ArtLowImg} alt='' className='absolute top-0 right-0 opacity-30' />
       </Link>
 
     </li>

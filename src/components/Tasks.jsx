@@ -1,16 +1,21 @@
 import { useEffect, useState } from 'react'
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd'
+import { DragDropContext, Droppable } from 'react-beautiful-dnd'
 import ModalTask from './ModalTask'
-import useSendRequest from '../hooks/useSendRequest'
 import useAuth from '../hooks/useAuth'
 import { deleteTask, updateTaskStatus } from '../helpers/requestFunctions'
-import Swal from 'sweetalert2'
 import { camelCaseToWords } from '../helpers/miscellaneous'
 import useAdmin from '../hooks/useAdmin'
 import io from 'socket.io-client'
 import { useParams } from 'react-router-dom'
+import DraggableTask from './DraggableTask'
+import useFetch from '../hooks/useFetch'
+import Alert from './Alert'
+import Divider from './Divider'
+import { provideSwal } from '../helpers/swalCustom'
+import { toast } from 'react-hot-toast'
 
 let socket
+
 const Tasks = ({ tasks }) => {
   const params = useParams()
   const { auth } = useAuth()
@@ -19,13 +24,11 @@ const Tasks = ({ tasks }) => {
   const [inProgress, setInProgress] = useState([])
   const [underReview, setUnderReview] = useState([])
   const [completed, setCompleted] = useState([])
-
-  const [expandedItems, setExpandedItems] = useState([])
+  const [taskObject, setTaskObject] = useState({ id: '' })
 
   const [currentTask, setCurrentTask] = useState()
 
-  const deleteInitialObject = { id: '', token: auth.token }
-  const { setFormData, setValidateForm } = useSendRequest(deleteInitialObject, deleteTask)
+  const { fetchAlert, setStartFetch } = useFetch(taskObject, deleteTask)
 
   // Socket.io
   useEffect(() => {
@@ -33,34 +36,26 @@ const Tasks = ({ tasks }) => {
     socket.emit('open project', params.id)
   }, [])
 
-  const deleteClick = (itemId) => {
-    const updatedFormData = { ...deleteInitialObject }
-    updatedFormData.id = itemId
-    setFormData(updatedFormData)
-    Swal.fire({
+  const deleteClick = async (itemId, itemName) => {
+    const updateTaskObject = { ...taskObject }
+    updateTaskObject.id = itemId
+    setTaskObject(updateTaskObject)
+    const tailwindSwal = await provideSwal()
+    tailwindSwal.fire({
       title: 'Are you sure?',
-      text: "You won't be able to revert this!",
+      html: `Delete the following task: <span class='text-orange-400'>${itemName}</span>? You won't be able to revert this!`,
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
+      confirmButtonColor: '#818CF8',
+      cancelButtonColor: '#f87171',
       confirmButtonText: 'Yes, delete it!'
-    }).then((result) => {
+    }).then(async (result) => {
       if (result.isConfirmed) {
-        setValidateForm(true)
+        setStartFetch(true)
       }
     })
   }
   const [modal, setModal] = useState(false)
-
-  const handleClickExpand = (itemId) => {
-    setExpandedItems((prevExpanded) =>
-      prevExpanded.includes(itemId)
-        ? prevExpanded.filter((id) => id !== itemId)
-        : [...prevExpanded, itemId]
-    )
-  }
-
   useEffect(() => {
     setPending(tasks.filter((item) => item.status === 'Pending'))
     setInProgress(tasks.filter((item) => item.status === 'In Progress'))
@@ -141,7 +136,6 @@ const Tasks = ({ tasks }) => {
         source,
         destination
       )
-
       const sourceIndex = source.index
 
       result.pending && setPending(result.pending)
@@ -171,7 +165,7 @@ const Tasks = ({ tasks }) => {
 
         elementToSend.lastUpdateBy = auth._id
         elementToSend.status = camelCaseToWords(destination.droppableId)
-        const result = await updateTaskStatus(elementToSend, auth.token)
+        const result = await updateTaskStatus(elementToSend)
         socket.emit('update task', result.editedTask)
       }
       updateTaskInDb()
@@ -181,353 +175,88 @@ const Tasks = ({ tasks }) => {
   return (
     <>
       <ModalTask modal={modal} setModal={setModal} currentTask={currentTask}>
-        <h3>Edit task</h3>
+        <Divider type='task' text='Edit task' />
       </ModalTask>
       <DragDropContext onDragEnd={onDragEnd}>
-        <Droppable droppableId='pending'>
-          {(provided, snapshot) => (
-            <div
-              ref={provided.innerRef}
-              className={`w-1/4 ${snapshot.isDraggingOver ? 'bg-red-200' : 'bg-slate-200'}`}
-            >
-              {pending?.map((item, index) => (
-                <Draggable
-                  key={item._id}
-                  draggableId={item._id}
-                  index={index}
+        <div className='flex flex-col lg:flex-row gap-4 flex-1'>
+          <div className='w-full z-10'>
+            <p className='text-center p-2 rounded-md relative shadow-md bg-gray-50 dark:bg-slate-700 dark:text-gray-50'>
+              <span className='right-0 mx-auto left-0 top-0 w-full py-0.5 rounded-tr-md rounded-tl-md bg-red-400 absolute' />
+              Pending
+            </p>
+            <Droppable droppableId='pending'>
+              {(provided, snapshot) => (
+                <div
+                  ref={provided.innerRef}
+                  className={`${snapshot.isDraggingOver && 'bg-red-200'}`}
                 >
-                  {(provided, snapshot) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.draggableProps}
-                      {...provided.dragHandleProps}
-                      className={`p-2 rounded-md m-2 bg-gray-50 shadow-md ${snapshot.isDragging}`}
-                    >
-                      <div className='flex justify-between'>
-                        <p>{item.name}</p>
-                        <svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' strokeWidth={1.5} stroke='#9ca3af' className='w-6 h-6 cursor-pointer' onClick={() => handleClickExpand(item._id)}>
-                          <path strokeLinecap='round' strokeLinejoin='round' d='M19.5 8.25l-7.5 7.5-7.5-7.5' />
-                        </svg>
-                      </div>
+                  {pending?.map((item, index) => (
+                    <DraggableTask item={item} index={index} key={index} isAdmin={isAdmin} deleteClick={deleteClick} setModal={setModal} setCurrentTask={setCurrentTask} />
+                  ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
 
-                      <div className='flex justify-between mt-2'>
-                        <p className={`text-xs ${item.priority === 'Low' ? 'text-green-600' : item.priority === 'Medium' ? 'text-yellow-600' : 'text-red-600'}`}>{item.priority}</p>
-                        <p className='text-gray-400 text-xs '>{new Date(item.deadLine).toLocaleString().split(',')[0]}</p>
-                      </div>
-
-                      {expandedItems.includes(item._id) && (
-                        <>
-                          <p className='text-gray-400 text-xs mt-2'>{item.description}</p>
-                          {item.lastUpdateBy?.name && (
-                            <p className='text-gray-400 font-bold text-xs mt-2'>Last update: {item.lastUpdateBy.name}</p>
-                          )}
-                          {isAdmin && (
-                            <div className='flex justify-end gap-2'>
-                              <svg
-                                viewBox='0 0 20 20'
-                                fill='none'
-                                xmlns='http://www.w3.org/2000/svg'
-                                className='mt-1 h-5 w-5 opacity-50 cursor-pointer'
-                                aria-hidden='true'
-                                onClick={() => [setModal(true), setCurrentTask(item)]}
-                              >
-                                <path
-                                  d='M4 13V16H7L16 7L13 4L4 13Z'
-                                  fill='#EDE9FE'
-                                  stroke='#7893f9'
-                                  strokeWidth='2'
-                                />
-                              </svg>
-
-                              <svg
-                                viewBox='0 0 20 20'
-                                fill='none'
-                                xmlns='http://www.w3.org/2000/svg'
-                                className='mt-1 h-5 w-5 opacity-50 cursor-pointer'
-                                onClick={() => deleteClick(item._id)}
-                              >
-                                <rect
-                                  x='5'
-                                  y='6'
-                                  width='10'
-                                  height='10'
-                                  fill='#fad8d8'
-                                  stroke='#f87171'
-                                  strokeWidth='2'
-                                />
-                                <path d='M3 6H17' stroke='#f87171' strokeWidth='2' />
-                                <path d='M8 6V4H12V6' stroke='#f87171' strokeWidth='2' />
-                              </svg>
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  )}
-                </Draggable>
-              ))}
-              {provided.placeholder}
-            </div>
-          )}
-        </Droppable>
-        <Droppable droppableId='inProgress'>
-          {(provided, snapshot) => (
-            <div
-              ref={provided.innerRef}
-              className={`w-1/4 ${snapshot.isDraggingOver ? 'bg-orange-200' : 'bg-slate-200'}`}
-            >
-              {inProgress?.map((item, index) => (
-                <Draggable
-                  key={item._id}
-                  draggableId={item._id}
-                  index={index}
+          </div>
+          <div className='w-full z-10'>
+            <p className='text-center p-2 rounded-md relative shadow-md bg-gray-50 dark:bg-slate-700 dark:text-gray-50'>
+              <span className='right-0 mx-auto left-0 top-0 w-full py-0.5 rounded-tr-md rounded-tl-md bg-orange-400 absolute' />
+              In progress
+            </p>
+            <Droppable droppableId='inProgress'>
+              {(provided, snapshot) => (
+                <div
+                  ref={provided.innerRef}
+                  className={`${snapshot.isDraggingOver && 'bg-orange-200'}`}
                 >
-                  {(provided, snapshot) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.draggableProps}
-                      {...provided.dragHandleProps}
-                      className={`p-2 rounded-md m-2 bg-gray-50 shadow-md ${snapshot.isDragging}`}
-                    >
-                      <div className='flex justify-between'>
-                        <p>{item.name}</p>
-                        <svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' strokeWidth={1.5} stroke='#9ca3af' className='w-6 h-6 cursor-pointer' onClick={() => handleClickExpand(item._id)}>
-                          <path strokeLinecap='round' strokeLinejoin='round' d='M19.5 8.25l-7.5 7.5-7.5-7.5' />
-                        </svg>
-                      </div>
-
-                      <div className='flex justify-between mt-2'>
-                        <p className={`text-xs ${item.priority === 'Low' ? 'text-green-600' : item.priority === 'Medium' ? 'text-yellow-600' : 'text-red-600'}`}>{item.priority}</p>
-                        <p className='text-gray-400 text-xs '>{new Date(item.deadLine).toLocaleString().split(',')[0]}</p>
-                      </div>
-
-                      {expandedItems.includes(item._id) && (
-                        <>
-                          <p className='text-gray-400 text-xs mt-2'>{item.description}</p>
-                          {item.lastUpdateBy?.name && (
-                            <p className='text-gray-400 font-bold text-xs mt-2'>Last update: {item.lastUpdateBy.name}</p>
-                          )}
-                          {isAdmin && (
-                            <div className='flex justify-end gap-2'>
-                              <svg
-                                viewBox='0 0 20 20'
-                                fill='none'
-                                xmlns='http://www.w3.org/2000/svg'
-                                className='mt-1 h-5 w-5 opacity-50 cursor-pointer'
-                                aria-hidden='true'
-                                onClick={() => [setModal(true), setCurrentTask(item)]}
-                              >
-                                <path
-                                  d='M4 13V16H7L16 7L13 4L4 13Z'
-                                  fill='#EDE9FE'
-                                  stroke='#7893f9'
-                                  strokeWidth='2'
-                                />
-                              </svg>
-
-                              <svg
-                                viewBox='0 0 20 20'
-                                fill='none'
-                                xmlns='http://www.w3.org/2000/svg'
-                                className='mt-1 h-5 w-5 opacity-50 cursor-pointer'
-                                onClick={() => deleteClick(item._id)}
-                              >
-                                <rect
-                                  x='5'
-                                  y='6'
-                                  width='10'
-                                  height='10'
-                                  fill='#fad8d8'
-                                  stroke='#f87171'
-                                  strokeWidth='2'
-                                />
-                                <path d='M3 6H17' stroke='#f87171' strokeWidth='2' />
-                                <path d='M8 6V4H12V6' stroke='#f87171' strokeWidth='2' />
-                              </svg>
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  )}
-                </Draggable>
-              ))}
-              {provided.placeholder}
-            </div>
-          )}
-        </Droppable>
-        <Droppable droppableId='underReview'>
-          {(provided, snapshot) => (
-            <div
-              ref={provided.innerRef}
-              className={`w-1/4 ${snapshot.isDraggingOver ? 'bg-yellow-200' : 'bg-slate-200'}`}
-            >
-              {underReview?.map((item, index) => (
-                <Draggable
-                  key={item._id}
-                  draggableId={item._id}
-                  index={index}
+                  {inProgress?.map((item, index) => (
+                    <DraggableTask item={item} index={index} key={index} isAdmin={isAdmin} deleteClick={deleteClick} setModal={setModal} setCurrentTask={setCurrentTask} />
+                  ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </div>
+          <div className='w-full z-10'>
+            <p className='text-center p-2 rounded-md relative shadow-md bg-gray-50 dark:bg-slate-700 dark:text-gray-50'>
+              <span className='right-0 mx-auto left-0 top-0 w-full py-0.5 rounded-tr-md rounded-tl-md bg-yellow-400 absolute' />
+              Under Review
+            </p>
+            <Droppable droppableId='underReview'>
+              {(provided, snapshot) => (
+                <div
+                  ref={provided.innerRef}
+                  className={`${snapshot.isDraggingOver && 'bg-yellow-200'}`}
                 >
-                  {(provided, snapshot) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.draggableProps}
-                      {...provided.dragHandleProps}
-                      className={`p-2 rounded-md m-2 bg-gray-50 shadow-md ${snapshot.isDragging}`}
-                    >
-                      <div className='flex justify-between'>
-                        <p>{item.name}</p>
-                        <svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' strokeWidth={1.5} stroke='#9ca3af' className='w-6 h-6 cursor-pointer' onClick={() => handleClickExpand(item._id)}>
-                          <path strokeLinecap='round' strokeLinejoin='round' d='M19.5 8.25l-7.5 7.5-7.5-7.5' />
-                        </svg>
-                      </div>
-
-                      <div className='flex justify-between mt-2'>
-                        <p className={`text-xs ${item.priority === 'Low' ? 'text-green-600' : item.priority === 'Medium' ? 'text-yellow-600' : 'text-red-600'}`}>{item.priority}</p>
-                        <p className='text-gray-400 text-xs '>{new Date(item.deadLine).toLocaleString().split(',')[0]}</p>
-                      </div>
-
-                      {expandedItems.includes(item._id) && (
-                        <>
-                          <p className='text-gray-400 text-xs mt-2'>{item.description}</p>
-                          {item.lastUpdateBy?.name && (
-                            <p className='text-gray-400 font-bold text-xs mt-2'>Last update: {item.lastUpdateBy.name}</p>
-                          )}
-                          {isAdmin && (
-                            <div className='flex justify-end gap-2'>
-                              <svg
-                                viewBox='0 0 20 20'
-                                fill='none'
-                                xmlns='http://www.w3.org/2000/svg'
-                                className='mt-1 h-5 w-5 opacity-50 cursor-pointer'
-                                aria-hidden='true'
-                                onClick={() => [setModal(true), setCurrentTask(item)]}
-                              >
-                                <path
-                                  d='M4 13V16H7L16 7L13 4L4 13Z'
-                                  fill='#EDE9FE'
-                                  stroke='#7893f9'
-                                  strokeWidth='2'
-                                />
-                              </svg>
-
-                              <svg
-                                viewBox='0 0 20 20'
-                                fill='none'
-                                xmlns='http://www.w3.org/2000/svg'
-                                className='mt-1 h-5 w-5 opacity-50 cursor-pointer'
-                                onClick={() => deleteClick(item._id)}
-                              >
-                                <rect
-                                  x='5'
-                                  y='6'
-                                  width='10'
-                                  height='10'
-                                  fill='#fad8d8'
-                                  stroke='#f87171'
-                                  strokeWidth='2'
-                                />
-                                <path d='M3 6H17' stroke='#f87171' strokeWidth='2' />
-                                <path d='M8 6V4H12V6' stroke='#f87171' strokeWidth='2' />
-                              </svg>
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  )}
-                </Draggable>
-              ))}
-              {provided.placeholder}
-            </div>
-          )}
-        </Droppable>
-        <Droppable droppableId='completed'>
-          {(provided, snapshot) => (
-            <div
-              ref={provided.innerRef}
-              className={`w-1/4 ${snapshot.isDraggingOver ? 'bg-green-200' : 'bg-slate-200'}`}
-            >
-              {completed?.map((item, index) => (
-                <Draggable
-                  key={item._id}
-                  draggableId={item._id}
-                  index={index}
+                  {underReview?.map((item, index) => (
+                    <DraggableTask item={item} index={index} key={index} isAdmin={isAdmin} deleteClick={deleteClick} setModal={setModal} setCurrentTask={setCurrentTask} />
+                  ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </div>
+          <div className='w-full z-10'>
+            <p className='text-center p-2 rounded-md relative shadow-md bg-gray-50 dark:bg-slate-700 dark:text-gray-50'>
+              <span className='right-0 mx-auto left-0 top-0 w-full py-0.5 rounded-tr-md rounded-tl-md bg-green-400 absolute' />
+              Completed
+            </p>
+            <Droppable droppableId='completed'>
+              {(provided, snapshot) => (
+                <div
+                  ref={provided.innerRef}
+                  className={`${snapshot.isDraggingOver && 'bg-green-200'}`}
                 >
-                  {(provided, snapshot) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.draggableProps}
-                      {...provided.dragHandleProps}
-                      className={`p-2 rounded-md m-2 bg-gray-50 shadow-md ${snapshot.isDragging}`}
-                    >
-                      <div className='flex justify-between'>
-                        <p>{item.name}</p>
-                        <svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' strokeWidth={1.5} stroke='#9ca3af' className='w-6 h-6 cursor-pointer' onClick={() => handleClickExpand(item._id)}>
-                          <path strokeLinecap='round' strokeLinejoin='round' d='M19.5 8.25l-7.5 7.5-7.5-7.5' />
-                        </svg>
-                      </div>
-
-                      <div className='flex justify-between mt-2'>
-                        <p className={`text-xs ${item.priority === 'Low' ? 'text-green-600' : item.priority === 'Medium' ? 'text-yellow-600' : 'text-red-600'}`}>{item.priority}</p>
-                        <p className='text-gray-400 text-xs '>{new Date(item.deadLine).toLocaleString().split(',')[0]}</p>
-                      </div>
-
-                      {expandedItems.includes(item._id) && (
-                        <>
-                          <p className='text-gray-400 text-xs mt-2'>{item.description}</p>
-                          {item.lastUpdateBy?.name && (
-                            <p className='text-gray-400 font-bold text-xs mt-2'>Last update: {item.lastUpdateBy.name}</p>
-                          )}
-                          {isAdmin && (
-                            <div className='flex justify-end gap-2'>
-                              <svg
-                                viewBox='0 0 20 20'
-                                fill='none'
-                                xmlns='http://www.w3.org/2000/svg'
-                                className='mt-1 h-5 w-5 opacity-50 cursor-pointer'
-                                aria-hidden='true'
-                                onClick={() => [setModal(true), setCurrentTask(item)]}
-                              >
-                                <path
-                                  d='M4 13V16H7L16 7L13 4L4 13Z'
-                                  fill='#EDE9FE'
-                                  stroke='#7893f9'
-                                  strokeWidth='2'
-                                />
-                              </svg>
-
-                              <svg
-                                viewBox='0 0 20 20'
-                                fill='none'
-                                xmlns='http://www.w3.org/2000/svg'
-                                className='mt-1 h-5 w-5 opacity-50 cursor-pointer'
-                                onClick={() => deleteClick(item._id)}
-                              >
-                                <rect
-                                  x='5'
-                                  y='6'
-                                  width='10'
-                                  height='10'
-                                  fill='#fad8d8'
-                                  stroke='#f87171'
-                                  strokeWidth='2'
-                                />
-                                <path d='M3 6H17' stroke='#f87171' strokeWidth='2' />
-                                <path d='M8 6V4H12V6' stroke='#f87171' strokeWidth='2' />
-                              </svg>
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  )}
-                </Draggable>
-              ))}
-              {provided.placeholder}
-            </div>
-          )}
-        </Droppable>
+                  {completed?.map((item, index) => (
+                    <DraggableTask item={item} index={index} key={index} isAdmin={isAdmin} deleteClick={deleteClick} setModal={setModal} setCurrentTask={setCurrentTask} />
+                  ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </div>
+        </div>
       </DragDropContext>
     </>
   )
