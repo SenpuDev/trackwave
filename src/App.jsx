@@ -1,3 +1,4 @@
+import '../styles/datePickerCustom.css'
 import { BrowserRouter, Routes, Route, createHashRouter, RouterProvider } from 'react-router-dom'
 import AuthLayout from './layouts/AuthLayout'
 import Login from './pages/Login'

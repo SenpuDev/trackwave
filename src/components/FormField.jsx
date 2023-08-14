@@ -1,5 +1,3 @@
-import '../styles/datePickerCustom.css' // Html calendar picker on dark mode
-
 const FormField = ({ type, id, text, value, min, selectOptions, onChange }) => {
   let content
 
