@@ -16,7 +16,6 @@ import '../styles/swalCustom.css'
 import { provideSwal } from '../helpers/swalCustom'
 import Divider from './Divider'
 import { toast } from 'react-hot-toast'
-
 let socket
 
 const Project = () => {
@@ -83,7 +82,7 @@ const Project = () => {
           <div className={`${t.visible ? 'animate-fade-down' : 'animate-fade-up animate-alternate-reverse'} dark:text-white bg-gray-50 dark:bg-slate-700 text-center rounded-lg mx-auto p-2 max-w-md w-full shadow-lg`}>
             <svg aria-hidden='true' className='flex-shrink-0 inline w-6 h-6 mr-3' fill='currentColor' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'><path fillRule='evenodd' d='M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z' clipRule='evenodd' /></svg>
             <span className='text-orange-400'>{deletedTask.name} </span>
-            deleted by project creator.
+            deleted by {deletedTask.lastUpdateBy.name}
           </div>
         ), { duration: 4000 })
       }
@@ -127,9 +126,6 @@ const Project = () => {
           <Alert alert={projectAlert} />
         </div>
       )}
-      {fetchAlert.msg && (
-        <Alert alert={fetchAlert} />
-      )}
       {project.name &&
         (
           <>
@@ -138,6 +134,9 @@ const Project = () => {
             </ModalTask>
 
             <div className='p-10 shadow-sm bg-gray-50 dark:bg-slate-800 rounded relative'>
+              {fetchAlert.msg && (
+                <Alert alert={fetchAlert} />
+              )}
               <img src={ArtFullImg} alt='Decorative art' className='absolute top-0 right-0 opacity-10 w-full pointer-events-none' />
               <div className='flex justify-between items-center'>
                 <h2 className='text-3xl font-bold dark:text-white'>{name}</h2>

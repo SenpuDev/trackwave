@@ -8,7 +8,7 @@ const FormField = ({ type, id, text, value, min, selectOptions, onChange }) => {
     case 'text':
       content = (
         <input
-          className='w-full p-1 rounded-lg bg-gray-100 dark:bg-slate-700 dark:text-slate-100 outline-none sm:flex-1 '
+          className='w-full p-1 rounded-lg bg-gray-100 dark:bg-slate-700 dark:text-slate-100 outline-none sm:flex-1 dark:[color-scheme:dark] '
           type={type}
           min={min}
           id={id}

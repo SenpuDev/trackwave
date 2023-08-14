@@ -9,10 +9,8 @@ import io from 'socket.io-client'
 import { useParams } from 'react-router-dom'
 import DraggableTask from './DraggableTask'
 import useFetch from '../hooks/useFetch'
-import Alert from './Alert'
 import Divider from './Divider'
 import { provideSwal } from '../helpers/swalCustom'
-import { toast } from 'react-hot-toast'
 
 let socket
 
@@ -28,7 +26,7 @@ const Tasks = ({ tasks }) => {
 
   const [currentTask, setCurrentTask] = useState()
 
-  const { fetchAlert, setStartFetch } = useFetch(taskObject, deleteTask)
+  const { setStartFetch } = useFetch(taskObject, deleteTask)
 
   // Socket.io
   useEffect(() => {
