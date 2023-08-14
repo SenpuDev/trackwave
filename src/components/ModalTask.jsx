@@ -61,7 +61,7 @@ const ModalTask = ({ modal, setModal, children, currentTask }) => {
   return (
     <Transition.Root show={modal} as={Fragment}>
       <Dialog as='div' className='fixed inset-0 overflow-y-auto  z-20' onClose={() => setModal(false)}>
-        <div className='flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0'>
+        <div className='flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:p-0'>
           <Transition.Child
             as={Fragment}
             enter='ease-out duration-300'
@@ -90,7 +90,7 @@ const ModalTask = ({ modal, setModal, children, currentTask }) => {
             leaveFrom='opacity-100 translate-y-0 sm:scale-100'
             leaveTo='opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95'
           >
-            <div className='inline-block align-bottom bg-gray-50 dark:bg-slate-800 rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all my-8 sm:align-middle max-w-lg w-10/12 sm:p-6'>
+            <div className='inline-block bg-gray-50 dark:bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all my-8 align-middle max-w-lg w-10/12 p-6'>
 
               <div className='block absolute top-0 right-0 pt-4 pr-4'>
                 <button
